@@ -17,6 +17,7 @@ class ViewableMap extends Field implements Contracts\CanBeLengthConstrained
     use Concerns\HasExtraInputAttributes;
     use Concerns\HasAffixes;
     use Concerns\HasPlaceholder;
+    use Concerns\HasColors;
     use HasExtraAlpineAttributes;
 
     protected string $view = 'filament-drawable-map::forms.components.viewable-map';
@@ -24,6 +25,7 @@ class ViewableMap extends Field implements Contracts\CanBeLengthConstrained
     protected $titles;
     protected $polygons;
     protected $color;
+    protected $options;
 
     public $mode = 'light';
 
@@ -91,7 +93,7 @@ class ViewableMap extends Field implements Contracts\CanBeLengthConstrained
         return $polygons;
     }
 
-    public function getState()
+    public function getState(): mixed
     {
         $state = parent::getState();
 
