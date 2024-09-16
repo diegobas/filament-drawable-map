@@ -1,11 +1,3 @@
-@php
-$affixLabelClasses = [
-'whitespace-nowrap group-focus-within:text-primary-500',
-'text-gray-400' => ! $errors->has($getStatePath()),
-'text-danger-400' => $errors->has($getStatePath()),
-];
-@endphp
-
 <style>
     /* The popup bubble styling. */
     .popup-bubble {
@@ -61,14 +53,25 @@ $affixLabelClasses = [
     }
 </style>
 
-<x-forms::field-wrapper :id="$getId()" :label="$getLabel()" :label-sr-only="$isLabelHidden()"
-    :helper-text="$getHelperText()" :hint="$getHint()" :required="$isRequired()" :state-path="$getStatePath()">
+<x-dynamic-component
+    :component="$getFieldWrapperView()"
+    :field="$field"
+>
+
+    @php
+        $affixLabelClasses = [
+            'whitespace-nowrap group-focus-within:text-primary-500',
+            'text-gray-400' => ! $errors->has($getStatePath()),
+            'text-danger-400' => $errors->has($getStatePath()),
+        ];
+    @endphp
 
     <div x-data="{
             mode: @js($getMode()),
             map: null,
             popup: null,
             titles: @js($getTitles()),
+            colors: @js($getColors()),
             polygons: @js($getPolygons()),
             init() {
                 let component = document.getElementById(@js($getId()))
@@ -326,6 +329,10 @@ $affixLabelClasses = [
                     this.polygons.forEach((item, index) => {
                         var polygon = new google.maps.Polygon(polygonOptions)
                         polygon.setPath(item)
+                        polygon.setOptions({
+                            strokeColor: this.colors[index] ?? '#FF0000',
+                            fillColor: this.colors[index] ?? '#FF0000',
+                        })
                         polygon.getPath().forEach(function(element,index){globalBounds.extend(element)})
                         polygon.addListener('mouseover', (e) => {
                             if (this.titles) {
@@ -334,7 +341,14 @@ $affixLabelClasses = [
                                 this.popup.setMap(this.map)
                             }
                         })
-                        polygon.addListener('mouseout', (e) => this.popup.setMap(null)))
+                        polygon.addListener('mouseout', (e) => this.popup.setMap(null))
+                        polygon.addListener('click', function (e) {
+                            var bounds = polygon.getBounds()
+                            if (bounds) {
+                                this.map.fitBounds(bounds)
+                                this.map.panToBounds(bounds)
+                            }
+                        })
                         polygon.setMap(this.map)
                         if (globalBounds) {
                             this.map.fitBounds(globalBounds)
@@ -354,14 +368,6 @@ $affixLabelClasses = [
         }}
         wire:ignore id="{{ $getId() }}">
 
-        @if (($prefixAction = $getPrefixAction()) && (! $prefixAction->isHidden()))
-        {{ $prefixAction }}
-        @endif
-
-        @if ($icon = $getPrefixIcon())
-        <x-dynamic-component :component="$icon" class="w-5 h-5" />
-        @endif
-
         @if ($label = $getPrefixLabel())
         <span @class($affixLabelClasses)>
             {{ $label }}
@@ -378,4 +384,4 @@ $affixLabelClasses = [
         </div>
     </div>
 
-</x-forms::field-wrapper>
+</x-dynamic-component>

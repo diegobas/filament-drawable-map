@@ -3,11 +3,15 @@
 namespace DiegoBas\FilamentDrawableMap\Forms\Components;
 
 use Closure;
+use DiegoBas\FilamentDrawableMap\Traits\InteractsWithMap;
+use Filament\Actions\Concerns\CanDispatchEvent;
 use Filament\Forms\Components\Component;
 use Filament\Forms\Components\Field;
 use Filament\Forms\Components\Contracts;
 use Filament\Forms\Components\Concerns;
+use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Notifications\Notification;
+use Filament\Support\Concerns\HasColor;
 use Filament\Support\Concerns\HasExtraAlpineAttributes;
 
 class DrawableMap extends Field implements Contracts\CanBeLengthConstrained
@@ -17,7 +21,11 @@ class DrawableMap extends Field implements Contracts\CanBeLengthConstrained
     use Concerns\HasExtraInputAttributes;
     use Concerns\HasAffixes;
     use Concerns\HasPlaceholder;
+    use HasColor;
+    use Concerns\CanBeDisabled;
     use HasExtraAlpineAttributes;
+    use InteractsWithForms;
+    use InteractsWithMap;
 
     protected string $view = 'filament-drawable-map::forms.components.drawable-map';
 
@@ -35,7 +43,14 @@ class DrawableMap extends Field implements Contracts\CanBeLengthConstrained
         return $this->mode;
     }
 
-    public function getState()
+    public function color(string | array | Closure | null $color): static
+    {
+        $this->color = $color;
+
+        return $this;
+    }
+
+    public function getState(): mixed
     {
         $state = parent::getState();
 
