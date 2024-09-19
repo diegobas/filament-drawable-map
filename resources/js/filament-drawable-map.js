@@ -61,7 +61,7 @@ export default function filamentDrawableMapPlugin({
                 fillOpacity: 0.35,
                 draggable: false,
                 geodesic: true,
-                editable: editable,
+                editable: false,
             })
 
             const centerControlDiv = document.createElement("div")
@@ -134,23 +134,24 @@ export default function filamentDrawableMapPlugin({
                     }
                 })
 
-                document.addEventListener('keyup', function (event) {
-                    if (event.key === "Control") {
-                        editable = false;
-                        if (polygon) { polygon.setEditable(editable); }
-                        map.setOptions({
-                            draggableCursor:'',
-                            draggingCursor: ''});
+                map.addListener('mouseout', () => {
+                    editable = false
+                    this.setMapEditable(map, polygon, false)
+                })
+
+                map.addListener('mouseover', () => {
+                    editable = true
+                })
+
+                document.addEventListener('keyup', (event) => {
+                    if (editable && event.key === "Control") {
+                        this.setMapEditable(map, polygon, false)
                     }
                 });
 
-                document.addEventListener('keydown', function (event) {
-                    if (event.key === "Control") {
-                        editable = true;
-                        if (polygon) { polygon.setEditable(editable); }
-                        map.setOptions({
-                            draggableCursor:'crossHair',
-                            draggingCursor: 'crossHair'});
+                document.addEventListener('keydown', (event) => {
+                    if (editable && event.key === "Control") {
+                        this.setMapEditable(map, polygon, true)
                     }
                 });
 
@@ -162,10 +163,12 @@ export default function filamentDrawableMapPlugin({
                 })
 
                 polygon.addListener('click', function (e) {
-                    var bounds = polygon.getBounds()
-                    if (bounds) {
-                        map.fitBounds(bounds)
-                        map.panToBounds(bounds)
+                    if (!polygon.getEditable()) {
+                        var bounds = polygon.getBounds()
+                        if (bounds) {
+                            map.fitBounds(bounds)
+                            map.panToBounds(bounds)
+                        }
                     }
                 })
 
@@ -177,6 +180,29 @@ export default function filamentDrawableMapPlugin({
                 google.maps.event.clearListeners(map);
                 google.maps.event.clearInstanceListeners(map);
             }
+        },
+
+        setMapEditable: function (map, polygon, editable) {
+            const nopoi = {
+                featureType: 'poi',
+                elementType: 'all',
+                stylers: [{ visibility: 'off' }]
+            }
+
+            if (polygon) { polygon.setEditable(editable); }
+
+            const currentStyles = map.get('styles') || []
+
+            if (editable) {
+                currentStyles.push(nopoi)
+            } else {
+                currentStyles.pop(nopoi)
+            }
+
+            map.setOptions({
+                draggableCursor: editable ? 'crossHair' : '',
+                draggingCursor: editable ? 'crossHair' : '',
+                styles: currentStyles})
         },
 
         createClearControl: function (map) {
